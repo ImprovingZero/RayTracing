@@ -16,11 +16,13 @@ const vec3 tools::randomInUnitSphere()
 const bool tools::refract(const vec3& light, const vec3& n, float ind, vec3& refracted) //ind = tan(out)/tan(in)
 {
 	vec3 v = Unit(light);
-	float dt = Dot(v, n);
-	float delta = 1.f - ind * ind * (1.f - (dt * dt));
+	vec3 N = Unit(n);
+	if (Dot(light, n) > 0) N = -N;
+	float dt = -Dot(N, v);
+	float delta = 1 - ind * ind * (1 - dt * dt);
 	if (delta > 0)
 	{
-		refracted = ind * (v - n * dt) - n * sqrt(delta);
+		refracted = (-N) * sqrt(delta) + ind * (v + N * dt);
 		return true;
 	}
 	else return false;

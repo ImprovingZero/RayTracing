@@ -8,6 +8,9 @@
 #include"material.h"
 using namespace tools;
 
+#define _USE_MATH_DEFINES
+#include<math.h>
+
 const vec3 color(ray& r, hitable_list* world, int depth)
 {
 	
@@ -29,11 +32,8 @@ const vec3 color(ray& r, hitable_list* world, int depth)
 		
 		ray scattered;
 		vec3 attenuation;
-		//std::cout << "++++" << std::endl;
-		//std::cout << rec.mat << std::endl;
 		if (depth < 50 && rec.mat->scatter(r, rec, attenuation, scattered))
 		{
-			//std::cout << "-----" << std::endl;
 			return attenuation * color(scattered, world, depth + 1);
 		}
 		else return vec3(0.f, 0.f, 0.f);
@@ -51,26 +51,33 @@ const vec3 color(ray& r, hitable_list* world, int depth)
 
 int main()
 {
-	int nx = 200;
-	int ny = 100;
+	int nx = 1024;
+	int ny = 960;
 	int ns = 100;
 	std::ofstream fout("output.ppm");
 	fout << "P3\n" << nx << ' ' << ny << "\n255\n";
 
 	
-	std::vector<hitable*>list(4);
-	list[0] = new sphere(vec3(0.f, 0.f, -1.f), 0.5f, new lambertian(vec3(0.1f, 0.2f, 0.5f)));
-	list[1] = new sphere(vec3(0.f, -100.5f, -1.f), 100.f, new lambertian(vec3(0.8f, 0.8f, 0.f)));
-	list[2] = new sphere(vec3(1.f, 0.f, -1.f), 0.5f, new smooth(vec3(0.8f, 0.6f, 0.2f)));
-	list[3] = new sphere(vec3(-1.f, 0.f, -1.f), 0.5f, new transparent(1.5f));
-	//list[4] = new sphere(vec3(-1.f, 0.f, -1.f), -0.45f, new transparent(1.5f));
+	float R = cos(float(M_PI) / 4.f);
+	std::vector<hitable*>list(0);
+	//list.push_back(new sphere(vec3(-R, 0.f, -1.f), R, new lambertian(vec3(0.f, 0.f, 1.f))));
+	//list.push_back(new sphere(vec3(R, 0.f, -1.f), R, new lambertian(vec3(1.f, 0.f, 0.f))));
+	//list.push_back(new sphere(vec3(0.f,0.f,-1.f),0.5f))
 
 	hitable_list* world = new hitable_list(list);
-	camera Cam;
+	world->randomScene();
+
+	vec3 lookfrom(6.f, 1.f, 2.f);
+	vec3 lookat(0.f, 0.5f, 0.f);
+	float distToFocus = (lookfrom - lookat).length();
+	float aperture = 2.f;
+	camera Cam(lookfrom, lookat, vec3(0.f, 1.f, 0.f), 60, float(nx) / float(ny), aperture, distToFocus);
+	//camera Cam(vec3(-2.f,2.f,1.f),vec3(0.f,0.f,-1.f),vec3(0.f,1.f,0.f),
+	//	50.f,float(nx)/float(ny));
 
 	for (int j = ny - 1; j >= 0; j--)
 	{
-		if (j%10==0) std::cout << "Rendering: " << float(ny - j)*100 / ny <<"%"<< std::endl;
+		std::cout << "Rendering: " << float(ny - j)*100 / ny <<"%"<< std::endl;
 		for (int i = 0; i < nx; i++)
 		{
 			vec3 col(0.f, 0.f, 0.f);

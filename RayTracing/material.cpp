@@ -18,41 +18,40 @@ bool smooth::scatter(const ray& r, const hitRecord& rec, vec3& attenuation, ray&
 
 bool transparent::scatter(const ray& r, const hitRecord& rec, vec3& attenuation, ray& scattered) const
 {
-	vec3 outNormal;
+	vec3 Normal;
 	vec3 reflected = Reflect(r.getDirection(), rec.normal);
-
-	float ind;
+	float ind = 1.f;
 	attenuation = vec3(1.f, 1.f, 1.f);
 	vec3 refracted;
 	float reflectProb;
-	float cosine;
-
+	float cos;
 	if (Dot(r.getDirection(), rec.normal) > 0)
 	{
-		outNormal = -rec.normal;
+		Normal = -rec.normal;
 		ind = _refract;
-		cosine = _refract * Dot(r.getDirection(), rec.normal) / r.getDirection().length();
+		cos = _refract * Dot(r.getDirection(), rec.normal) / r.getDirection().length();
 	}
 	else
 	{
-		outNormal = rec.normal;
-		ind = 1.f / _refract;
-		cosine = -Dot(r.getDirection(), rec.normal) / r.getDirection().length();
+		Normal = rec.normal;
+		ind = 1 / _refract;
+		cos = -Dot(r.getDirection(), rec.normal) / r.getDirection().length();
 	}
-	
-	if (tools::refract(r.getDirection(), outNormal, ind, refracted))
+	if (tools::refract(r.getDirection(), Normal, ind, refracted))
 	{
-		reflectProb = tools::schlick(cosine, _refract);
+		reflectProb = tools::schlick(cos, _refract);
 	}
 	else {
-		scattered = ray(rec.p, reflected);
+		scattered = ray(rec.p, rec.p + reflected);
 		reflectProb = 1.f;
 	}
-	if(tools::rand1()>=reflectProb){
-		scattered = ray(rec.p, refracted);
+	if (tools::rand1()<reflectProb)
+	{
+		scattered = ray(rec.p, reflected + rec.p);  //Attention: ray(origin,DESTINATION); the 2nd parameter is NOT direction
 	}
-	else {
-		scattered = ray(rec.p, reflected);
+	else
+	{
+		scattered = ray(rec.p, rec.p + refracted);
 	}
 	return true;
 }
